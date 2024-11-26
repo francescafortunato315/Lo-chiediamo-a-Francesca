@@ -1,0 +1,16 @@
+credentials:
+  usernames:
+    mrossi:
+      email: marco.rossi@gmail.com
+      name: Marco
+      password: $2b$12$cWesgEH8onN1iW9jz2B4/eo4nmhuf5MI0//8egTGH459dJ3YWRR8O # abc
+    lbianchi:
+      email: laura.bianchi@gmail.com
+      name: Laura
+      password: $2b$12$33nwKx1FsTwdt0AmlHWHROJF7EpKxJr7AiI90rLhptd1P/C4lutKG # def
+cookie:
+  expiry_days: 0
+  key: 904u392y43982 # Must be string
+  name: biscotto
+preauthorized:
+  emails:
