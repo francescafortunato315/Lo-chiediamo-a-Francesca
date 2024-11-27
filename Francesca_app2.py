@@ -48,7 +48,7 @@ def carica_profilo(nome_utente):
 
 authenticator.login()
 
-os.environ["OPENAI_API_KEY"] == st.secrets('api_key')
+os.environ["OPENAI_API_KEY"] = st.secrets('api_key')
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 # Caricamento catalogo
 with open('catalogo_aggiornato.json', 'r') as file:
