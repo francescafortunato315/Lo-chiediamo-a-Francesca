@@ -7,15 +7,11 @@ import os
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-import faiss
-from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
-from uuid import uuid4
-from langchain_core.documents import Document
 import json
 import streamlit_authenticator as stauth
-from streamlit_authenticator.utilities.hasher import Hasher
+
 
 def reset_chat():
     st.session_state.messages = []
@@ -52,47 +48,14 @@ def carica_profilo(nome_utente):
 
 authenticator.login()
 
-with open('catalogo_taggato_completo.json', 'r') as file:
+os.environ["OPENAI_API_KEY"] = st.secrets('api_key')
+embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+# Caricamento catalogo
+with open('catalogo_aggiornato.json', 'r') as file:
     catalogo = json.load(file)
 
-with open('links.json', 'r') as file:
-    links = json.load(file)
-
-with open('catalogo_raw.txt', 'r') as file:
-    righe = file.readlines()
-
-righe = [r for r in righe if r != '\n']
-
-for (chiave, prodotto), descrizione in zip(catalogo.items(), righe):
-    prodotto['descrizione'] = descrizione
-
-for capo in catalogo.keys():
-    catalogo[capo]['link'] = links[capo]
-
-os.environ["OPENAI_API_KEY"] = st.secrets["api_key"]
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-
-
-index = faiss.IndexFlatL2(len(embeddings.embed_query("hello world")))
-
-vector_store = FAISS(
-    embedding_function=embeddings,
-    index=index,
-    docstore=InMemoryDocstore(),
-    index_to_docstore_id={},
-)
-
-
-documents = [
-    Document(
-        page_content=item['descrizione'],
-        metadata={k: v for k, v in item.items() if k != 'descrizione'}
-    )
-    for item in catalogo.values()
-]
-
-uuids = [str(uuid4()) for _ in range(len(documents))]
-vector_store.add_documents(documents=documents, ids=uuids)
+# Caricamento vector store
+vector_store = FAISS.load_local('vector_store.faiss', embeddings, allow_dangerous_deserialization=True)
 
 
 # Inizializza il modello LLM
