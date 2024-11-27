@@ -40,7 +40,7 @@ authenticator = stauth.Authenticate(
 def carica_profilo(nome_utente):
     filename = f'profilo_{nome_utente}.txt'
     try:
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
             profilo = file.read()
         return profilo
     except FileNotFoundError:
