@@ -6,4 +6,4 @@ langchain-community
 langchain-openai
 openai
 faiss-cpu
-faiss
+faiss==1.5.3
