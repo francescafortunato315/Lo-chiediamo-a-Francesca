@@ -50,9 +50,6 @@ authenticator.login()
 
 os.environ["OPENAI_API_KEY"] = st.secrets['api_key']
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-# Caricamento catalogo
-with open('catalogo_aggiornato.json', 'r') as file:
-    catalogo = json.load(file)
 
 # Caricamento vector store
 vector_store = FAISS.load_local('vector_store.faiss', embeddings, allow_dangerous_deserialization=True)
