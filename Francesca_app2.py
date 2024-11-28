@@ -40,7 +40,7 @@ authenticator = stauth.Authenticate(
 def carica_profilo(nome_utente):
     filename = f'profilo_{nome_utente}.txt'
     try:
-        with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
+        with open(filename, 'r') as file:
             profilo = file.read()
         return profilo
     except FileNotFoundError:
@@ -129,7 +129,7 @@ elif st.session_state["authentication_status"]:
         "Non includere prodotti che non rispettano i requisiti definiti nel profilo cliente e non essere troppo creativo nel suggerire opzioni non basate sui dati disponibili. "
         "Profilo Cliente:\n{profilo_cliente}\n\n"
         "Context (risultati dal database vettoriale):\n{context}\n\n"
-        "Per ciascun prodotto trovato, includi il nome, le taglie disponibili, l'occasione d'uso, il link al prodotto (URL) e il genere. "
+        "Per ciascun prodotto trovato, presentalo con il nome proprio e includi le sue caratteristiche come le taglie disponibili, l'occasione d'uso, il link al prodotto (URL) e il genere. "
         "Restituisci i risultati in modo chiaro, limitandoti ai prodotti presenti nel catalogo e ordinandoli in base alla pertinenza rispetto alle esigenze espresse dal cliente."
     )
 
