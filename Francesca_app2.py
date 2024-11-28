@@ -119,7 +119,7 @@ elif st.session_state["authentication_status"]:
     )
 
     # Prompt del sistema per l'assistente
-        system_prompt = (
+    system_prompt = (
         "Sei un assistente virtuale specializzato nell'aiutare gli utenti a trovare capi di abbigliamento che soddisfino le loro esigenze e preferenze personali. "
         "Quando rispondi a una richiesta, utilizza prioritariamente le informazioni contenute nel profilo del cliente (ad esempio, genere, stile preferito, acquisti o ricerche precedenti) "
         "per identificare i prodotti più rilevanti nel catalogo.\n\n"
