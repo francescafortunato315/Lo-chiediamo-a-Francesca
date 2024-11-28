@@ -129,6 +129,7 @@ elif st.session_state["authentication_status"]:
         "   - Stile preferito.\n"
         "   - Altri dettagli specificati nel profilo o nella richiesta del cliente.\n\n"
         "2. Presenta ogni prodotto trovato con il **nome proprio** (esempio Maglione Leonardo, Abito Sofia,...) e fornisci una descrizione dettagliata basata sulle sue caratteristiche, che devono includere:\n"
+        "   - **Nome proprio.**\n"
         "   - **Taglie disponibili.**\n"
         "   - **Genere.**\n"
         "   - **Occasione d'uso.**\n"
