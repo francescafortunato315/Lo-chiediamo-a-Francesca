@@ -11,6 +11,43 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 import json
 import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
+
+
+def costruisci_risposta(data):
+    if 'Mi dispiace' not in data['answer']:
+        risp = data['answer'].split('\n')[0] +'\n'
+        for doc in data['context']:
+            meta = doc.metadata
+            nome = meta.get('nome_proprio', 'Nome non disponibile')
+            genere = meta.get('genere', 'Genere non specificato')
+            colore = meta.get('colore', 'Colore non specificato')
+            if isinstance(colore, list):
+                colore = " o ".join(colore)
+            materiale = meta.get('materiale', 'Materiale non specificato')
+            if isinstance(materiale, list):
+                materiale = " e ".join(materiale)
+            taglie = ", ".join(meta.get('taglie disponibili', meta.get('taglie', [])))
+            stile = meta.get('stile', 'Stile non specificato')
+            if isinstance(stile, list):
+                stile = ", ".join(stile)
+            occasioni = ", ".join(meta.get("occasioni d'uso", meta.get('occasioni', [])))
+            link = meta.get('link', '#')
+
+            # Formattazione della risposta
+            risp += f"\n**{nome}**\n"
+            risp += f"- Genere: {genere}\n"
+            risp += f"- Colore: {colore}\n"
+            risp += f"- Materiale: {materiale}\n"
+            risp += f"- Stile: {stile}\n"
+            risp += f"- Taglie disponibili: {taglie}\n"
+            risp += f"- Occasioni d'uso: {occasioni}\n"
+            risp += f"- Link: [Visualizza il prodotto]({link})\n"
+    else:
+        risp = data['answer']
+    return risp
+
 
 
 def reset_chat():
@@ -23,20 +60,6 @@ def reset_chat():
         del st.session_state["user_input"]
         st.session_state.user_input = None
 
-#hashed_passwords = Hasher(['abc', 'def']).generate()
-
-import yaml
-from yaml.loader import SafeLoader
-with open('./config.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
-
-authenticator = stauth.Authenticate(
-    credentials=config['credentials'],
-    cookie_name=config['cookie']['name'],
-    cookie_key=config['cookie']['key'],
-    cookie_expiry_days=config['cookie']['expiry_days'],
-)
-
 def carica_profilo(nome_utente):
     filename = f'profilo_{nome_utente}.txt'
     try:
@@ -46,6 +69,18 @@ def carica_profilo(nome_utente):
     except FileNotFoundError:
         return st.write("Profilo cliente non trovato.")
 
+
+# hashed_passwords = Hasher(['abc', 'def']).generate()
+
+with open('./config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    credentials=config['credentials'],
+    cookie_name=config['cookie']['name'],
+    cookie_key=config['cookie']['key'],
+    cookie_expiry_days=config['cookie']['expiry_days'],
+)
 authenticator.login()
 
 os.environ["OPENAI_API_KEY"] = st.secrets['api_key']
@@ -53,19 +88,16 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
 with open('catalogo_aggiornato.json', 'r') as file:
     catalogo = json.load(file)
-    
+
 # Caricamento vector store
 vector_store = FAISS.load_local('vector_store.faiss', embeddings, allow_dangerous_deserialization=True)
 
-
 # Inizializza il modello LLM
-llm = ChatOpenAI(model="gpt-4o-mini", temperature = 0.5)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
 
 
-# Funzione per caricare il profilo utente
 
 
-# Funzione per autenticare l'utente
 def inizializza_stato():
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -77,8 +109,6 @@ def inizializza_stato():
 if "initialized" not in st.session_state:
     inizializza_stato()
     st.session_state.initialized = True  # Flag per evitare ripetizioni
-
-
 
 if st.session_state["authentication_status"] is False:
     ## ログイン成功ログイン失敗
@@ -93,7 +123,7 @@ elif st.session_state["authentication_status"]:
     # Carica il profilo dell'utente loggato
     name = config['credentials']['usernames'][st.session_state["username"]]['name']
     profilo_cliente = carica_profilo(name)
-    #st.write(profilo_cliente)
+    # st.write(profilo_cliente)
 
     # Prompt per contestualizzare le domande
     contextualize_q_system_prompt = (
@@ -128,16 +158,14 @@ elif st.session_state["authentication_status"]:
         "   - Genere corrispondente.\n"
         "   - Stile preferito.\n"
         "   - Altri dettagli specificati nel profilo o nella richiesta del cliente.\n\n"
-        "2. Presenta ogni prodotto trovato con il **nome proprio** (esempio Maglione Leonardo, Abito Sofia,...) e fornisci una descrizione dettagliata basata sulle sue caratteristiche, che devono includere:\n"
-        "   - **nome_proprio.**\n"
-        "   - **Taglie disponibili.**\n"
-        "   - **Genere.**\n"
-        "   - **Occasione d'uso.**\n"
-        "   - **Link al prodotto** (URL che inizia con 'https').\n\n"
+        "2. Presenta una lista sommaria dei prodotti trovati. Evita dettagli come materiali, dimensioni o altre caratteristiche tecniche.\n"
+    
         "**Requisiti specifici:**\n"
         "- Limita i suggerimenti ai prodotti presenti nel catalogo e non proporre opzioni non supportate dai dati disponibili.\n"
         "- Ordina i prodotti trovati in base alla loro pertinenza rispetto alle esigenze del cliente.\n"
         "- Presenta i risultati in modo chiaro, organizzato e conciso, assicurandoti che siano facilmente comprensibili per il cliente.\n\n"
+        
+        #"Se non trovi nessuna corrispondenza a catalogo, inizia sempre la frase di risposta con 'Mi dispiace!' e spiega che non ci sono prodotti adatti alle esigenze specificate.\n\n"
         "**Contesto fornito:**\n"
         "- **Profilo Cliente:**\n"
         "{profilo_cliente}\n\n"
@@ -154,15 +182,18 @@ elif st.session_state["authentication_status"]:
         ]
     )
 
+
+
     # Creazione della chain di Q&A
     question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
     # Creazione della chain di retrieval con memoria storica
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
+
     # Interfaccia della chat
-    #st.title("Assistente Virtuale per Acquisti di Abbigliamento")
-    #st.write("Chatta con l'assistente per trovare i prodotti adatti alle tue esigenze di stile.")
+    # st.title("Assistente Virtuale per Acquisti di Abbigliamento")
+    # st.write("Chatta con l'assistente per trovare i prodotti adatti alle tue esigenze di stile.")
 
     # Visualizza il profilo cliente
     with st.sidebar:
@@ -179,20 +210,17 @@ elif st.session_state["authentication_status"]:
             st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "user_icon.png"})
             st.session_state.chat_history.append(HumanMessage(content=user_input))
 
-
         if st.button("Cerco un maxi maglione per la montagna"):
             user_input = "Cerco un maxi maglione per la montagna"
             st.session_state.user_input = user_input
             st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "user_icon.png"})
             st.session_state.chat_history.append(HumanMessage(content=user_input))
 
-
         if st.button("Qual è l'outfit più indicato per una cena elegante?"):
             user_input = "Cerco un abito elegante"
             st.session_state.user_input = user_input
             st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "user_icon.png"})
             st.session_state.chat_history.append(HumanMessage(content=user_input))
-
 
         st.divider()
 
@@ -218,18 +246,18 @@ elif st.session_state["authentication_status"]:
             with st.chat_message('user', avatar='user_icon.png'):
                 st.write(message['content'])
 
-    #st.sidebar.header("Profilo Cliente")
-    #st.sidebar.write(profilo_cliente)
+    # st.sidebar.header("Profilo Cliente")
+    # st.sidebar.write(profilo_cliente)
 
     # Mantieni la cronologia della chat in Streamlit session_state
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
     # Campo di input per la chat
-    #user_input = st.chat_input("Cosa stai cercando?")
+    # user_input = st.chat_input("Cosa stai cercando?")
 
     # Esegui solo se è stato inserito un input
-    #if user_input := st.chat_input('Cosa stai cercando?'):
+    # if user_input := st.chat_input('Cosa stai cercando?'):
     if user_input := st.chat_input('Fammi la tua domanda'):
         st.session_state.user_input = user_input
         st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "user_icon.png"})
@@ -246,21 +274,23 @@ elif st.session_state["authentication_status"]:
                 {"input": user_input, "chat_history": st.session_state.chat_history, 'profilo_cliente': profilo_cliente}
             )
 
+            response_formatted = costruisci_risposta(response)
             # Aggiungi la risposta dell'assistente alla cronologia
-            st.session_state.chat_history.append(AIMessage(content=response["answer"]))
-
+            #st.session_state.chat_history.append(AIMessage(content=response["answer"]))
+            st.session_state.chat_history.append(AIMessage(content=response_formatted))
             # Mostra il messaggio dell'assistente
             st.session_state.messages.append(
-                {"role": "assistant", "content": response['answer'], "avatar": 'assistant_icon.png'}
+                {"role": "assistant", "content": response_formatted, "avatar": 'assistant_icon.png'}
             )
 
             with st.chat_message('assistant', avatar='assistant_icon.png'):
-                st.write(response['answer'])
+                st.write(response_formatted)
 
     # Visualizza la cronologia della chat
-    #st.subheader("Cronologia della Chat")
-    #for message in st.session_state.chat_history:
-        #if isinstance(message, HumanMessage):
-            #st.write(f"**Tu**: {message.content}")
-        #elif isinstance(message, AIMessage):
-            #st.write(f"**Assistente**: {message.content}")
+    # st.subheader("Cronologia della Chat")
+    # for message in st.session_state.chat_history:
+    # if isinstance(message, HumanMessage):
+    # st.write(f"**Tu**: {message.content}")
+    # elif isinstance(message, AIMessage):
+    # st.write(f"**Assistente**: {message.content}")
+
