@@ -17,7 +17,7 @@ from yaml.loader import SafeLoader
 
 def costruisci_risposta(data):
     if 'Mi dispiace' not in data['answer']:
-        risp = data['answer'].split('\n')[0] +'\n'
+        risp = data['answer'] +'\n'
         for doc in data['context']:
             meta = doc.metadata
             nome = meta.get('nome_proprio', 'Nome non disponibile')
