@@ -169,7 +169,7 @@ elif st.session_state["authentication_status"]:
         "3. I prodotti devono essere ordinati per rilevanza rispetto alle preferenze del cliente e presentati in modo chiaro, conciso e facilmente comprensibile. "
         "Non includere dettagli tecnici come materiali, taglie o descrizioni lunghe, ma concentrati solo sull'essenziale per orientare il cliente verso la scelta giusta.\n\n"
 
-        #"4. Se non trovi prodotti che soddisfano i criteri del cliente, rispondi in modo cortese, iniziando con 'Mi dispiace!' e spiegando che non ci sono prodotti adatti alle specifiche esigenze.\n\n"
+        "4. Se non trovi prodotti che soddisfano i criteri del cliente, rispondi in modo cortese, iniziando con 'Mi dispiace!' e spiegando che non ci sono prodotti adatti alle specifiche esigenze.\n\n"
 
         "**Contesto fornito:**\n"
         "- **Profilo Cliente:**\n"
