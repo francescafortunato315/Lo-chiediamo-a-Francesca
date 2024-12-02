@@ -17,7 +17,8 @@ from yaml.loader import SafeLoader
 
 def costruisci_risposta(data):
     if 'Mi dispiace' not in data['answer']:
-        risp = data['answer'] +'\n'
+        #risp = data['answer'].split('\n')[0] +'\n'
+        risp = data['answer'] + '\n'
         for doc in data['context']:
             meta = doc.metadata
             nome = meta.get('nome_proprio', 'Nome non disponibile')
@@ -150,22 +151,26 @@ elif st.session_state["authentication_status"]:
 
     # Prompt del sistema per l'assistente
     system_prompt = (
-        "Sei un assistente virtuale specializzato nell'aiutare gli utenti a trovare capi di abbigliamento che soddisfino le loro esigenze e preferenze personali. "
-        "Quando rispondi a una richiesta, utilizza prioritariamente le informazioni contenute nel profilo del cliente (ad esempio, genere, stile preferito, acquisti o ricerche precedenti) "
-        "per identificare i prodotti più rilevanti nel catalogo.\n\n"
+        "Sei un assistente virtuale esperto nell'aiutare gli utenti a trovare capi di abbigliamento che rispondano alle loro esigenze e preferenze personali. "
+        "Quando rispondi, considera prioritariamente le informazioni nel profilo del cliente (ad esempio, genere, stile preferito, acquisti o ricerche precedenti) "
+        "per identificare i prodotti più adatti nel catalogo.\n\n"
+
         "**Compiti principali:**\n"
         "1. Analizza i dati forniti nel contesto recuperato dal database vettoriale e seleziona esclusivamente i prodotti che soddisfano i seguenti criteri:\n"
         "   - Genere corrispondente.\n"
         "   - Stile preferito.\n"
-        "   - Altri dettagli specificati nel profilo o nella richiesta del cliente.\n\n"
-        "2. Presenta una lista sommaria dei prodotti trovati. Evita dettagli come materiali, dimensioni o altre caratteristiche tecniche.\n"
-    
-        "**Requisiti specifici:**\n"
-        "- Limita i suggerimenti ai prodotti presenti nel catalogo e non proporre opzioni non supportate dai dati disponibili.\n"
-        "- Ordina i prodotti trovati in base alla loro pertinenza rispetto alle esigenze del cliente.\n"
-        "- Presenta i risultati in modo chiaro, organizzato e conciso, assicurandoti che siano facilmente comprensibili per il cliente.\n\n"
-        
-        #"Se non trovi nessuna corrispondenza a catalogo, inizia sempre la frase di risposta con 'Mi dispiace!' e spiega che non ci sono prodotti adatti alle esigenze specificate.\n\n"
+        "   - Eventuali altre preferenze espresse nel profilo del cliente o nella richiesta specifica.\n\n"
+
+        "2. Restituisci una lista dei prodotti più pertinenti, includendo per ciascuno: \n"
+        "   - Nome del prodotto (`nome_proprio`)\n"
+        "   - Link al prodotto (`link`)\n"
+        "   - Eventuali altre informazioni brevi che possano aiutare l'utente a capire la compatibilità del prodotto con le sue esigenze (ad esempio, taglie disponibili, colori, materiali).\n\n"
+
+        "3. I prodotti devono essere ordinati per rilevanza rispetto alle preferenze del cliente e presentati in modo chiaro, conciso e facilmente comprensibile. "
+        "Non includere dettagli tecnici come materiali, taglie o descrizioni lunghe, ma concentrati solo sull'essenziale per orientare il cliente verso la scelta giusta.\n\n"
+
+        #"4. Se non trovi prodotti che soddisfano i criteri del cliente, rispondi in modo cortese, iniziando con 'Mi dispiace!' e spiegando che non ci sono prodotti adatti alle specifiche esigenze.\n\n"
+
         "**Contesto fornito:**\n"
         "- **Profilo Cliente:**\n"
         "{profilo_cliente}\n\n"
@@ -274,17 +279,17 @@ elif st.session_state["authentication_status"]:
                 {"input": user_input, "chat_history": st.session_state.chat_history, 'profilo_cliente': profilo_cliente}
             )
 
-            response_formatted = costruisci_risposta(response)
+            #response_formatted = costruisci_risposta(response)
             # Aggiungi la risposta dell'assistente alla cronologia
-            #st.session_state.chat_history.append(AIMessage(content=response["answer"]))
-            st.session_state.chat_history.append(AIMessage(content=response_formatted))
+            st.session_state.chat_history.append(AIMessage(content=response["answer"]))
+            #st.session_state.chat_history.append(AIMessage(content=response_formatted))
             # Mostra il messaggio dell'assistente
             st.session_state.messages.append(
-                {"role": "assistant", "content": response_formatted, "avatar": 'assistant_icon.png'}
+                {"role": "assistant", "content": response["answer"], "avatar": 'assistant_icon.png'}
             )
 
             with st.chat_message('assistant', avatar='assistant_icon.png'):
-                st.write(response_formatted)
+                st.write(response["answer"])
 
     # Visualizza la cronologia della chat
     # st.subheader("Cronologia della Chat")
